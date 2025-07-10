@@ -6,6 +6,7 @@
     <script src="https://unpkg.com/vue@3"></script>
 </head>
 <body>
+{% verbatim %}
 <div id="app">
     <div v-if="!question">
         <h2>Select topic</h2>
@@ -35,6 +36,7 @@
         </div>
     </div>
 </div>
+{% endverbatim %}
 <script>
 const { createApp } = Vue;
 createApp({
