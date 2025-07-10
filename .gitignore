@@ -10,7 +10,6 @@ venv/
 
 # Database
 
-
 # Static folder at project root
 /static/
 
