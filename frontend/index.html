@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Hello SAT Math Practice App</title>
+    <script src="https://unpkg.com/vue@3"></script>
+</head>
+<body>
+<div id="app">
+    <div v-if="!question">
+        <h2>Select topic</h2>
+        <select v-model="selectedTopic">
+            <option value="">Any</option>
+            <option v-for="t in topics" :key="t.topic_id" :value="t.topic_id">{{ t.name }}</option>
+        </select>
+        <button @click="start">Start</button>
+    </div>
+    <div v-else>
+        <h3>{{ question.skillset_name }}</h3>
+        <img :src="question.question_image" alt="question" v-if="question.question_image" style="max-width: 400px;">
+        <div v-if="question.type === 'multiple_choice'">
+            <label v-for="opt in options" :key="opt.value">
+                <input type="radio" name="answer" v-model="userAnswer" :value="opt.value"> {{ opt.text }}
+            </label>
+        </div>
+        <div v-else>
+            <input v-model="userAnswer" placeholder="Answer" />
+        </div>
+        <button @click="submit">Submit</button>
+        <div v-if="feedback">
+            <p v-if="feedback.correct" style="color:green">Correct!</p>
+            <div v-else style="color:red">
+                Incorrect. <a :href="feedback.skill_link" target="_blank">Learn</a>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+const { createApp } = Vue;
+createApp({
+    data() {
+        return {
+            topics: [],
+            selectedTopic: '',
+            question: null,
+            userAnswer: '',
+            feedback: null,
+        };
+    },
+    mounted() {
+        fetch('/practice/topics/')
+            .then(r => r.json())
+            .then(data => {
+                this.topics = data.topics;
+            });
+    },
+    computed: {
+        options() {
+            return [
+                {value: this.question.option_a, text: this.question.option_a},
+                {value: this.question.option_b, text: this.question.option_b},
+                {value: this.question.option_c, text: this.question.option_c},
+                {value: this.question.option_d, text: this.question.option_d},
+            ].filter(o => o.text);
+        }
+    },
+    methods: {
+        start() {
+            const url = this.selectedTopic ? `/practice/questions/?topic=${encodeURIComponent(this.selectedTopic)}` : '/practice/questions/';
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    this.question = data.questions[0];
+                });
+        },
+        submit() {
+            if(!this.question) return;
+            const form = new FormData();
+            form.append('answer', this.userAnswer);
+            fetch(`/practice/answer/${this.question.id}/`, {
+                method: 'POST',
+                body: form,
+                headers: {'X-CSRFToken': this.getCsrf()},
+            }).then(r => r.json())
+              .then(data => {
+                  this.feedback = data;
+              });
+        },
+        getCsrf() {
+            const m = document.cookie.match(/csrftoken=([^;]+)/);
+            return m ? m[1] : '';
+        }
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
