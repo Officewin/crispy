@@ -9,15 +9,15 @@ def get_random_questions(request):
     topics = request.GET.getlist('topic')
     qs = Question.objects.all()
     if topics:
-        qs = qs.filter(topic_name__in=topics)
+        qs = qs.filter(skillset__topic__name__in=topics)
     questions = random.sample(list(qs), min(10, qs.count()))
     data = []
     for q in questions:
         data.append({
             'id': q.id,
             'type': q.type,
-            'topic_name': q.topic_name,
-            'skillset_name': q.skillset_name,
+            'topic_name': q.skillset.topic.name,
+            'skillset_name': q.skillset.name,
             'question_image': q.question_image.url if q.question_image else '',
             'option_a': q.option_a,
             'option_b': q.option_b,

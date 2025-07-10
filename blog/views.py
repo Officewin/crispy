@@ -6,3 +6,4 @@ class IndexView(TemplateView):
     # template filename here. Using a simple name avoids the duplicated
     # "frontend/frontend" path that caused TemplateDoesNotExist errors.
     template_name = 'index.html'
+
