@@ -44,7 +44,7 @@
         <div v-else>
             <input v-model="userAnswer" placeholder="Answer" />
         </div>
-        <button @click="submit">Submit</button>
+        <button @click="submit" :disabled="submitDisabled">Submit</button>
         <div v-if="feedback">
             <p v-if="feedback.correct" style="color:green">Correct!</p>
             <div v-else style="color:red">
@@ -77,6 +77,7 @@ createApp({
             modalUrl: '',
             attempts: 0,
             attemptLimit: 3,
+            submitDisabled: false,
         };
     },
     mounted() {
@@ -109,6 +110,7 @@ createApp({
                     this.userAnswer = '';
                     this.feedback = null;
                     this.attempts = 0;
+                    this.submitDisabled = false;
                 });
         },
         nextQuestion() {
@@ -118,6 +120,7 @@ createApp({
                 this.userAnswer = '';
                 this.feedback = null;
                 this.attempts = 0;
+                this.submitDisabled = false;
             } else {
                 this.question = null;
                 alert('Session finished!');
@@ -135,6 +138,9 @@ createApp({
             }).then(r => r.json())
               .then(data => {
                   this.feedback = data;
+                  if(!data.correct && this.attempts >= this.attemptLimit){
+                      this.submitDisabled = true;
+                  }
                   if(data.correct || this.attempts >= this.attemptLimit){
                       setTimeout(() => {
                           this.nextQuestion();
