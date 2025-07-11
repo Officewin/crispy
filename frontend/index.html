@@ -44,6 +44,8 @@ createApp({
         return {
             topics: [],
             selectedTopic: '',
+            questions: [],
+            currentIndex: 0,
             question: null,
             userAnswer: '',
             feedback: null,
@@ -58,6 +60,7 @@ createApp({
     },
     computed: {
         options() {
+            if (!this.question) return [];
             return [
                 {value: this.question.option_a, text: this.question.option_a},
                 {value: this.question.option_b, text: this.question.option_b},
@@ -72,8 +75,23 @@ createApp({
             fetch(url)
                 .then(r => r.json())
                 .then(data => {
-                    this.question = data.questions[0];
+                    this.questions = data.questions;
+                    this.currentIndex = 0;
+                    this.question = this.questions[0] || null;
+                    this.userAnswer = '';
+                    this.feedback = null;
                 });
+        },
+        nextQuestion() {
+            this.currentIndex += 1;
+            if (this.currentIndex < this.questions.length) {
+                this.question = this.questions[this.currentIndex];
+                this.userAnswer = '';
+                this.feedback = null;
+            } else {
+                this.question = null;
+                alert('Session finished!');
+            }
         },
         submit() {
             if(!this.question) return;
@@ -86,6 +104,11 @@ createApp({
             }).then(r => r.json())
               .then(data => {
                   this.feedback = data;
+                  if(data.correct){
+                      setTimeout(() => {
+                          this.nextQuestion();
+                      }, 5000);
+                  }
               });
         },
         getCsrf() {
@@ -97,3 +120,4 @@ createApp({
 </script>
 </body>
 </html>
+
