@@ -4,6 +4,10 @@
     <meta charset="utf-8">
     <title>Hello SAT Math Practice App</title>
     <script src="https://unpkg.com/vue@3"></script>
+    <style>
+    .modal { position: fixed; top: 0; left: 0; right:0; bottom:0; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; }
+    .modal-content { background:#fff; padding:20px; max-width:90%; max-height:90%; overflow:auto; }
+    </style>
 </head>
 <body>
 {% verbatim %}
@@ -31,8 +35,15 @@
         <div v-if="feedback">
             <p v-if="feedback.correct" style="color:green">Correct!</p>
             <div v-else style="color:red">
-                Incorrect. <a :href="feedback.skill_link" target="_blank">Learn</a>
+                Incorrect.
+                <a href="#" @click.prevent="openLearn">Learn</a>
             </div>
+        </div>
+    </div>
+    <div v-if="showModal" class="modal">
+        <div class="modal-content">
+            <button @click="closeModal" style="float:right">Close</button>
+            <iframe :src="modalUrl" style="width:100%;height:80vh;border:none;"></iframe>
         </div>
     </div>
 </div>
@@ -49,6 +60,8 @@ createApp({
             question: null,
             userAnswer: '',
             feedback: null,
+            showModal: false,
+            modalUrl: '',
         };
     },
     mounted() {
@@ -110,6 +123,16 @@ createApp({
                       }, 5000);
                   }
               });
+        },
+        openLearn(){
+            if(this.feedback){
+                this.modalUrl = this.feedback.skill_link;
+                this.showModal = true;
+            }
+        },
+        closeModal(){
+            this.showModal = false;
+            this.modalUrl = '';
         },
         getCsrf() {
             const m = document.cookie.match(/csrftoken=([^;]+)/);
