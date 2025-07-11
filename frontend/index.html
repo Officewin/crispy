@@ -48,7 +48,7 @@
         <div v-if="feedback">
             <p v-if="feedback.correct" style="color:green">Correct!</p>
             <div v-else style="color:red">
-                Incorrect.
+                Incorrect. ({{ attempts }}/{{ attemptLimit }})
                 <a href="#" @click.prevent="openLearn">Learn</a>
             </div>
         </div>
@@ -75,6 +75,8 @@ createApp({
             feedback: null,
             showModal: false,
             modalUrl: '',
+            attempts: 0,
+            attemptLimit: 3,
         };
     },
     mounted() {
@@ -106,6 +108,7 @@ createApp({
                     this.question = this.questions[0] || null;
                     this.userAnswer = '';
                     this.feedback = null;
+                    this.attempts = 0;
                 });
         },
         nextQuestion() {
@@ -114,6 +117,7 @@ createApp({
                 this.question = this.questions[this.currentIndex];
                 this.userAnswer = '';
                 this.feedback = null;
+                this.attempts = 0;
             } else {
                 this.question = null;
                 alert('Session finished!');
@@ -121,6 +125,7 @@ createApp({
         },
         submit() {
             if(!this.question) return;
+            this.attempts += 1;
             const form = new FormData();
             form.append('answer', this.userAnswer);
             fetch(`/practice/answer/${this.question.id}/`, {
@@ -130,7 +135,7 @@ createApp({
             }).then(r => r.json())
               .then(data => {
                   this.feedback = data;
-                  if(data.correct){
+                  if(data.correct || this.attempts >= this.attemptLimit){
                       setTimeout(() => {
                           this.nextQuestion();
                       }, 5000);
