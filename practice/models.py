@@ -43,7 +43,10 @@ class Question(models.Model):
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
     skillset = models.ForeignKey(Skillset, on_delete=models.CASCADE)
     question_image = models.ImageField(upload_to="questions/")
-    answer = models.CharField(max_length=200)
+    # Answer is optional in the model so the admin form can require it
+    # only for open questions. For multiple choice questions the
+    # selected option will be saved as the answer automatically.
+    answer = models.CharField(max_length=200, blank=True)
     skill_link = models.URLField()
 
     option_a = models.CharField(max_length=200, blank=True, null=True)

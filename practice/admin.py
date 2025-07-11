@@ -25,6 +25,10 @@ class QuestionAdminForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Answer is optional at the model level but should be required only
+        # for open questions. Always mark it non-required here and let the
+        # clean() method enforce the rule based on the selected type.
+        self.fields["answer"].required = False
         # Pre-select the correct option when editing an existing question
         instance = getattr(self, "instance", None)
         if instance and instance.pk and instance.type == Question.MULTIPLE_CHOICE:
@@ -40,6 +44,9 @@ class QuestionAdminForm(forms.ModelForm):
             if not choice:
                 raise forms.ValidationError("Select the correct answer option.")
             cleaned["answer"] = cleaned.get(choice)
+        elif cleaned.get("type") == Question.OPEN:
+            if not cleaned.get("answer"):
+                raise forms.ValidationError("Answer is required for open questions.")
         return cleaned
 
 @admin.register(Question)
