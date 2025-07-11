@@ -6,7 +6,13 @@
     <script src="https://unpkg.com/vue@3"></script>
     <style>
     .modal { position: fixed; top: 0; left: 0; right:0; bottom:0; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; }
-    .modal-content { background:#fff; padding:20px; max-width:90%; max-height:90%; overflow:auto; }
+    .modal-content {
+        background:#fff;
+        padding:20px;
+        width:360px;
+        height:660px;
+        overflow:auto;
+    }
     </style>
 </head>
 <body>
@@ -42,7 +48,7 @@
     </div>
     <div v-if="showModal" class="modal">
         <div class="modal-content">
-            <button @click="closeModal" style="float:right">Close</button>
+            <button @click="closeModal" style="float:right">Retry</button>
             <iframe :src="modalUrl" style="width:100%;height:80vh;border:none;"></iframe>
         </div>
     </div>
