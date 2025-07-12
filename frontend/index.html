@@ -138,10 +138,8 @@ createApp({
             }).then(r => r.json())
               .then(data => {
                   this.feedback = data;
-                  if(!data.correct && this.attempts >= this.attemptLimit){
-                      this.submitDisabled = true;
-                  }
                   if(data.correct || this.attempts >= this.attemptLimit){
+                      this.submitDisabled = true;
                       setTimeout(() => {
                           this.nextQuestion();
                       }, 5000);
