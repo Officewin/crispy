@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hello SAT Math Practice App</title>
+    <script src="https://unpkg.com/vue@3"></script>
+    <style>
+    body { margin: 0; padding: 10px; font-family: sans-serif; }
+    label { display:block; margin:5px 0; }
+    input[type="text"], input[type="radio"], select { font-size:1rem; }
+    .modal { position: fixed; top: 0; left: 0; right:0; bottom:0; background: rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; }
+    .modal-content {
+        background:#fff;
+        padding:20px;
+        width:100%;
+        max-width:360px;
+        height:100%;
+        max-height:660px;
+        overflow:auto;
+        box-sizing:border-box;
+    }
+    </style>
+</head>
+<body>
+{% verbatim %}
+<div id="app" style="max-width:600px;margin:0 auto;">
+    <div v-if="!question">
+        <h2>Select topic</h2>
+        <select v-model="selectedTopic">
+            <option value="">Any</option>
+            <option v-for="t in topics" :key="t.topic_id" :value="t.topic_id">{{ t.name }}</option>
+        </select>
+        <button @click="start">Start</button>
+    </div>
+    <div v-else>
+        <h3>{{ question.skillset_name }}</h3>
+        <img :src="question.question_image" alt="question" v-if="question.question_image" style="max-width:100%;height:auto;">
+        <div v-if="question.type === 'multiple_choice'">
+            <label v-for="opt in options" :key="opt.value">
+                <input type="radio" name="answer" v-model="userAnswer" :value="opt.value"> {{ opt.text }}
+            </label>
+        </div>
+        <div v-else>
+            <input v-model="userAnswer" placeholder="Answer" />
+        </div>
+        <button @click="submit" :disabled="submitDisabled">Submit</button>
+        <div v-if="feedback">
+            <p v-if="feedback.correct" style="color:green">Correct!</p>
+            <div v-else style="color:red">
+                Incorrect. ({{ attempts }}/{{ attemptLimit }})
+                <a href="#" @click.prevent="openLearn">Learn</a>
+            </div>
+        </div>
+    </div>
+    <div v-if="showModal" class="modal">
+        <div class="modal-content">
+            <button @click="closeModal" style="float:right">Retry</button>
+            <iframe :src="modalUrl" style="width:100%;height:80vh;border:none;"></iframe>
+        </div>
+    </div>
+</div>
+{% endverbatim %}
+<script>
+const { createApp } = Vue;
+createApp({
+    data() {
+        return {
+            topics: [],
+            selectedTopic: '',
+            questions: [],
+            currentIndex: 0,
+            question: null,
+            userAnswer: '',
+            feedback: null,
+            showModal: false,
+            modalUrl: '',
+            attempts: 0,
+            attemptLimit: 3,
+            submitDisabled: false,
+        };
+    },
+    mounted() {
+        fetch('/practice/topics/')
+            .then(r => r.json())
+            .then(data => {
+                this.topics = data.topics;
+            });
+    },
+    computed: {
+        options() {
+            if (!this.question) return [];
+            return [
+                {value: this.question.option_a, text: this.question.option_a},
+                {value: this.question.option_b, text: this.question.option_b},
+                {value: this.question.option_c, text: this.question.option_c},
+                {value: this.question.option_d, text: this.question.option_d},
+            ].filter(o => o.text);
+        }
+    },
+    methods: {
+        start() {
+            const url = this.selectedTopic ? `/practice/questions/?topic=${encodeURIComponent(this.selectedTopic)}` : '/practice/questions/';
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    this.questions = data.questions;
+                    this.currentIndex = 0;
+                    this.question = this.questions[0] || null;
+                    this.userAnswer = '';
+                    this.feedback = null;
+                    this.attempts = 0;
+                    this.submitDisabled = false;
+                });
+        },
+        nextQuestion() {
+            this.currentIndex += 1;
+            if (this.currentIndex < this.questions.length) {
+                this.question = this.questions[this.currentIndex];
+                this.userAnswer = '';
+                this.feedback = null;
+                this.attempts = 0;
+                this.submitDisabled = false;
+            } else {
+                this.question = null;
+                alert('Session finished!');
+            }
+        },
+        submit() {
+            if(!this.question) return;
+            this.attempts += 1;
+            const form = new FormData();
+            form.append('answer', this.userAnswer);
+            fetch(`/practice/answer/${this.question.id}/`, {
+                method: 'POST',
+                body: form,
+                headers: {'X-CSRFToken': this.getCsrf()},
+            }).then(r => r.json())
+              .then(data => {
+                  this.feedback = data;
+                  if(data.correct || this.attempts >= this.attemptLimit){
+                      this.submitDisabled = true;
+                      setTimeout(() => {
+                          this.nextQuestion();
+                      }, 5000);
+                  }
+              });
+        },
+        openLearn(){
+            if(this.feedback){
+                this.modalUrl = this.feedback.skill_link;
+                this.showModal = true;
+            }
+        },
+        closeModal(){
+            this.showModal = false;
+            this.modalUrl = '';
+        },
+        getCsrf() {
+            const m = document.cookie.match(/csrftoken=([^;]+)/);
+            return m ? m[1] : '';
+        }
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
+
